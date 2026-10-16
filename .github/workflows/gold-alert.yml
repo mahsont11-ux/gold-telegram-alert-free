@@ -43,4 +43,4 @@ jobs:
           TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
           GEMINI_MODEL: gemini-3.6-flash
           MODE: ${{ github.event.inputs.mode || 'scan' }}
-        run: python xau_live_v2.py --mode "$MODE"
+        run: python xau_live_v3.py --mode "$MODE"
