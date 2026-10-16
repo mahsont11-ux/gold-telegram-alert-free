@@ -40,6 +40,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
           GEMINI_MODEL: gemini-3.6-flash
           MODE: ${{ github.event.inputs.mode || 'scan' }}
         run: python ai_overlay.py --mode "$MODE"
