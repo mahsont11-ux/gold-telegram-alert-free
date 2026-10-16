@@ -39,14 +39,6 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           MODE: ${{ github.event.inputs.mode || 'scan' }}
-        run: python bot.py --mode "$MODE"
-      - name: Persist last delivered alert
-        run: |
-          if ! git diff --quiet -- state.json; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add state.json
-            git commit -m 'chore: update alert dedup state [skip ci]'
-            git push
-          fi
+        run: python ai_overlay.py --mode "$MODE"
