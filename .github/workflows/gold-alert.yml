@@ -1,0 +1,52 @@
+
+name: Gold Telegram Alerts (free)
+
+on:
+  schedule:
+    - cron: '11,26,41,56 * * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'setup, test, status or scan'
+        type: choice
+        required: true
+        default: test
+        options:
+          - setup
+          - test
+          - status
+          - scan
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gold-telegram-alert
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Scan market / setup / test / status
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MODE: ${{ github.event.inputs.mode || 'scan' }}
+        run: python bot.py --mode "$MODE"
+      - name: Persist last delivered alert
+        run: |
+          if ! git diff --quiet -- state.json; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add state.json
+            git commit -m 'chore: update alert dedup state [skip ci]'
+            git push
+          fi
