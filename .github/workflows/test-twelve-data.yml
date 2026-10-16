@@ -1,0 +1,60 @@
+
+name: Test Twelve Data XAUUSD
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check XAUUSD 15m data
+        env:
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          import json
+          from urllib.parse import urlencode
+          from urllib.request import urlopen
+          from urllib.error import HTTPError, URLError
+
+          key = os.getenv("TWELVE_DATA_API_KEY", "")
+          if not key:
+              raise SystemExit("ERROR: API key not found")
+
+          params = {
+              "symbol": "XAU/USD",
+              "interval": "15min",
+              "outputsize": 1500,
+              "timezone": "UTC",
+              "apikey": key
+          }
+
+          url = "https://api.twelvedata.com/time_series?" + urlencode(params)
+
+          try:
+              with urlopen(url, timeout=25) as response:
+                  data = json.load(response)
+          except HTTPError as exc:
+              raise SystemExit(f"HTTP error: {exc.code}")
+          except URLError:
+              raise SystemExit("Network connection error")
+
+          values = data.get("values", [])
+          if data.get("status") == "error" or not values:
+              print("API error code:", data.get("code", "unknown"))
+              print("API message:", str(data.get("message", "No data")).replace(key, "[HIDDEN]")[:200])
+              raise SystemExit(1)
+
+          print("SUCCESS: XAU/USD data available")
+          print("Candles received:", len(values))
+          print("Latest candle UTC:", values[0].get("datetime"))
+          print("Latest close:", values[0].get("close"))
+
+          if len(values) < 1100:
+              print("WARNING: Limited history for H4 analysis")
+          PY
