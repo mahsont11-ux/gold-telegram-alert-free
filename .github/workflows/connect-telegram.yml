@@ -1,0 +1,55 @@
+
+name: Connect Telegram Webhook
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Register Telegram webhook
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+        run: |
+          python - <<'PY'
+          import os
+          import json
+          import urllib.request
+
+          token = os.getenv("BOT_TOKEN")
+          secret = os.getenv("WEBHOOK_SECRET")
+
+          if not token or not secret:
+              raise SystemExit("ERROR: Missing secrets")
+
+          payload = json.dumps({
+              "url": "https://gold-ai-chat.mahsont11.workers.dev/webhook",
+              "secret_token": secret,
+              "allowed_updates": ["message"]
+          }).encode()
+
+          url = "https://api.telegram.org/bot" + token + "/setWebhook"
+
+          req = urllib.request.Request(
+              url,
+              data=payload,
+              headers={"Content-Type": "application/json"},
+              method="POST"
+          )
+
+          try:
+              with urllib.request.urlopen(req, timeout=25) as response:
+                  result = json.load(response)
+          except Exception:
+              raise SystemExit("Webhook registration failed")
+
+          if result.get("ok"):
+              print("SUCCESS: Telegram webhook connected")
+          else:
+              raise SystemExit("Telegram rejected webhook")
+          PY
